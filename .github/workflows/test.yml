@@ -50,6 +50,7 @@ jobs:
 
   # Run acceptance tests in a matrix with Terraform CLI versions
   # Disabled while I figure it out how to run Litmus Chaos for the testing
+  # https://github.com/okkez/terraform-provider-mysql/blob/73c7a4495b83fd8fc531625327d1ea126ddb9c38/.github/workflows/test.yml#L68
 #  test:
 #    name: Terraform Provider Acceptance Tests
 #    needs: build
