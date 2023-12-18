@@ -7,7 +7,7 @@ import (
 
 const (
 	providerConfig = `
-provider "litmus_chaos" {
+provider "litmus-chaos" {
   host     = "http://localhost:1337"
   token    = "veryfaketoken"
 }
@@ -20,6 +20,6 @@ var (
 	// CLI command executed to create a provider server to which the CLI can
 	// reattach.
 	testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
-		"litmus_chaos": providerserver.NewProtocol6WithError(New("test")()),
+		"litmus-chaos": providerserver.NewProtocol6WithError(New("test")()),
 	}
 )
