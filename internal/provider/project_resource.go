@@ -175,7 +175,7 @@ func (r *projectResource) Delete(ctx context.Context, req resource.DeleteRequest
 	tflog.Warn(ctx, "DELETE not implemented as Litmus Chaos doesn't support project deletion")
 }
 
-// ImportState imports the resource to the Terraform state
+// ImportState imports the resource to the Terraform state.
 func (r *projectResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	var plan projectResourceModel
 
