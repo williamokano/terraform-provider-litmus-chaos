@@ -1,21 +1,21 @@
 name: Semantic Release
 
 on:
-    workflow_dispatch: { }
+  workflow_dispatch: { }
 
 jobs:
-    release:
-        permissions:
-            contents: write
-            issues: write
-            pull-requests: write
-        runs-on: ubuntu-latest
-        steps:
-            -   uses: actions/checkout@v2
-            -   uses: actions/setup-node@v2
-                with:
-                    node-version: 18
-            -   run: npx semantic-release
-                env:
-                    # Added Personal Access Token, or it won't trigger other events
-                    GITHUB_TOKEN: ${{ secrets.GH_PA_TOKEN_SEMANTIC_RELEASE }}
+  release:
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 18
+      - run: npx semantic-release
+        env:
+          # Added Personal Access Token, or it won't trigger other events
+          GITHUB_TOKEN: ${{ secrets.GH_PA_TOKEN_SEMANTIC_RELEASE }}
