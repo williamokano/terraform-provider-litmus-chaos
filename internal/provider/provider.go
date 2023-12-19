@@ -21,8 +21,10 @@ var (
 
 // litmusChaosProviderModel maps provider schema data to a Go type.
 type litmusChaosProviderModel struct {
-	Host  types.String `tfsdk:"host"`
-	Token types.String `tfsdk:"token"`
+	Host     types.String `tfsdk:"host"`
+	Token    types.String `tfsdk:"token"`
+	Username types.String `tfsdk:"username"`
+	Password types.String `tfsdk:"password"`
 }
 
 // New is a helper function to simplify provider server and testing implementation.
@@ -56,6 +58,15 @@ func (p *litmusChaosProvider) Schema(_ context.Context, _ provider.SchemaRequest
 			"host": schema.StringAttribute{
 				Description: "URI for Litmus Chaos Control Plane. May also be provided via `LITMUS_CHAOS_HOST` environment variable.",
 				Optional:    true,
+			},
+			"username": schema.StringAttribute{
+				Description: "Username for Litmus Chaos server. May also be provided via `LITMUS_CHAOS_USERNAME` environment variable.",
+				Optional:    true,
+			},
+			"password": schema.StringAttribute{
+				Description: "Password for Litmus Chaos server. May also be provided via `LITMUS_CHAOS_PASSWORD` environment variable.",
+				Optional:    true,
+				Sensitive:   true,
 			},
 			"token": schema.StringAttribute{
 				Description: "API Token for Litmus Chaos Control Plane API. May also be provided via `LITMUS_CHAOS_TOKEN` environment variable.",
@@ -92,10 +103,28 @@ func (p *litmusChaosProvider) Configure(ctx context.Context, req provider.Config
 
 	if config.Token.IsUnknown() {
 		resp.Diagnostics.AddAttributeError(
-			path.Root("password"),
+			path.Root("token"),
 			"Unknown Litmus Chaos API Token",
 			"The provider cannot create the Litmus Chaos API client as there is an unknown configuration value for the Litmus Chaos API token. "+
 				"Either target apply the source of the value first, set the value statically in the configuration, or use the LITMUS_CHAOS_TOKEN environment variable.",
+		)
+	}
+
+	if config.Username.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("username"),
+			"Unknown Litmus Chaos API Username",
+			"The provider cannot create the Litmus Chaos API client as there is an unknown configuration value for the Litmus Chaos API username. "+
+				"Either target apply the source of the value first, set the value statically in the configuration, or use the LITMUS_CHAOS_USERNAME environment variable.",
+		)
+	}
+
+	if config.Password.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("password"),
+			"Unknown Litmus Chaos API Password",
+			"The provider cannot create the Litmus Chaos API client as there is an unknown configuration value for the Litmus Chaos API password. "+
+				"Either target apply the source of the value first, set the value statically in the configuration, or use the LITMUS_CHAOS_PASSWORD environment variable.",
 		)
 	}
 
@@ -106,8 +135,12 @@ func (p *litmusChaosProvider) Configure(ctx context.Context, req provider.Config
 	// Default values to environment variables, but override
 	// with Terraform configuration value if set.
 
-	host := os.Getenv("LITMUS_CHAOS_HOST")
-	token := os.Getenv("LITMUS_CHAOS_TOKEN")
+	var (
+		host     = os.Getenv("LITMUS_CHAOS_HOST")
+		token    = os.Getenv("LITMUS_CHAOS_TOKEN")
+		username = os.Getenv("LITMUS_CHAOS_USERNAME")
+		password = os.Getenv("LITMUS_CHAOS_PASSWORD")
+	)
 
 	if !config.Host.IsNull() {
 		host = config.Host.ValueString()
@@ -115,6 +148,14 @@ func (p *litmusChaosProvider) Configure(ctx context.Context, req provider.Config
 
 	if !config.Token.IsNull() {
 		token = config.Token.ValueString()
+	}
+
+	if !config.Username.IsNull() {
+		username = config.Username.ValueString()
+	}
+
+	if !config.Password.IsNull() {
+		password = config.Password.ValueString()
 	}
 
 	// If any of the expected configurations are missing, return
@@ -130,14 +171,44 @@ func (p *litmusChaosProvider) Configure(ctx context.Context, req provider.Config
 		)
 	}
 
+	// If token is not provided, fallback to username and pass. Messages related to token
+	// must be preferential as username/password is not secure
 	if token == "" {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("token"),
-			"Missing Litmus Chaos API Token",
-			"The provider cannot create the Litmus Chaos client as there is a missing or empty value for the Litmus Chaos API token. "+
-				"Set the password value in the configuration or use the LITMUS_CHAOS_TOKEN environment variable. "+
-				"If either is already set, ensure the value is not empty.",
-		)
+		// No fallback
+		if username == "" && password == "" {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("token"),
+				"Missing Litmus Chaos API Token",
+				"The provider cannot create the Litmus Chaos client as there is a missing or empty value for the Litmus Chaos API token. "+
+					"Set the token value in the configuration or use the LITMUS_CHAOS_TOKEN environment variable. "+
+					"If either is already set, ensure the value is not empty. "+
+					"This can be empty if username and password are BOTH provided. ",
+			)
+		} else {
+
+			// Missing one of the fields
+			if username == "" {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("username"),
+					"Missing Litmus Chaos API Username",
+					"The provider cannot create the Litmus Chaos client as there is a missing or empty value for the Litmus Chaos API Username. "+
+						"Set the username value in the configuration or use the LITMUS_CHAOS_USERNAME environment variable. "+
+						"If either is already set, ensure the value is not empty. "+
+						"This can be empty if token is provided. ",
+				)
+			}
+
+			if password == "" {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("password"),
+					"Missing Litmus Chaos API Password",
+					"The provider cannot create the Litmus Chaos client as there is a missing or empty value for the Litmus Chaos API Password. "+
+						"Set the password value in the configuration or use the LITMUS_CHAOS_PASSWORD environment variable. "+
+						"If either is already set, ensure the value is not empty. "+
+						"This can be empty if token is provided. ",
+				)
+			}
+		}
 	}
 
 	if resp.Diagnostics.HasError() {
@@ -146,12 +217,18 @@ func (p *litmusChaosProvider) Configure(ctx context.Context, req provider.Config
 
 	ctx = tflog.SetField(ctx, "litmus_chaos_host", host)
 	ctx = tflog.SetField(ctx, "litmus_chaos_token", token)
-	ctx = tflog.MaskFieldValuesWithFieldKeys(ctx, "litmus_chaos_token")
+	ctx = tflog.SetField(ctx, "litmus_chaos_username", username)
+	ctx = tflog.SetField(ctx, "litmus_chaos_password", password)
+	ctx = tflog.MaskFieldValuesWithFieldKeys(ctx, "litmus_chaos_token", "litmus_chaos_password")
 
 	tflog.Debug(ctx, "Creating Litmus Chaos client")
 
 	// Create a new Litmus Chaos client using the configuration values
-	client, err := client.NewLitmusClient(host, token)
+	litmusClient, err := client.NewClientFromCredentials(host, client.LitmusCredentials{
+		Username: username,
+		Password: password,
+		Token:    token,
+	})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Create Litmus Chaos Client",
@@ -164,8 +241,8 @@ func (p *litmusChaosProvider) Configure(ctx context.Context, req provider.Config
 
 	// Make the Litmus Chaos client available during DataSource and Resource
 	// type Configure methods.
-	resp.DataSourceData = client
-	resp.ResourceData = client
+	resp.DataSourceData = litmusClient
+	resp.ResourceData = litmusClient
 
 	tflog.Info(ctx, "Configured Litmus Chaos client", map[string]any{"success": true})
 }
