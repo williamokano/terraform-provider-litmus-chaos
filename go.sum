@@ -195,8 +195,6 @@ github.com/vmihailenco/msgpack/v5 v5.4.1 h1:cQriyiUvjTwOHg8QZaPihLWeRAAVoCpE00IU
 github.com/vmihailenco/msgpack/v5 v5.4.1/go.mod h1:GaZTsDaehaPpQVyxrf5mtQlH+pc21PIudVV/E3rRQok=
 github.com/vmihailenco/tagparser/v2 v2.0.0 h1:y09buUbR+b5aycVFQs/g70pqKVZNBmxwAhO7/IwNM9g=
 github.com/vmihailenco/tagparser/v2 v2.0.0/go.mod h1:Wri+At7QHww0WTrCBeu4J6bNtoV6mEfg5OIWRZA9qds=
-github.com/williamokano/litmus-chaos-thin-client v0.0.2 h1:L+uiWeq5WjDjor76w2BWow22v6atWxVbsK7fVpJgMN8=
-github.com/williamokano/litmus-chaos-thin-client v0.0.2/go.mod h1:Vsi/T+1BfpqEE5Yoj188Xii7r37RZFkr+pkLE4Bpp6g=
 github.com/williamokano/litmus-chaos-thin-client v0.1.0 h1:ATGUwA3h5oWJMzqBXC11csU3QWhHOUoa/R0p/f3RQBY=
 github.com/williamokano/litmus-chaos-thin-client v0.1.0/go.mod h1:Vsi/T+1BfpqEE5Yoj188Xii7r37RZFkr+pkLE4Bpp6g=
 github.com/xanzy/ssh-agent v0.3.3 h1:+/15pJfg/RsTxqYcX6fHqOXZwwMP+2VyYWJeWM2qQFM=

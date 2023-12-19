@@ -17,4 +17,5 @@ jobs:
                     node-version: 18
             -   run: npx semantic-release
                 env:
-                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                    # Added Personal Access Token, or it won't trigger other events
+                    GITHUB_TOKEN: ${{ secrets.GH_PA_TOKEN_SEMANTIC_RELEASE }}
